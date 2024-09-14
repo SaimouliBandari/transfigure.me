@@ -1,9 +1,9 @@
 
-import { ArrowDropDown, CloudDownload, CloudUpload } from "@mui/icons-material"
-import { CssBaseline, Box, Container, AppBar, Toolbar, Button, IconButton, Typography, Menu, Grid2, List, ListItem, ListItemText, LinearProgress, CircularProgress, ButtonGroup, ClickAwayListener, Grow, MenuItem, MenuList, Paper, Popper } from "@mui/material"
+import { ArrowDropDown, CloudDownload, CloudUpload } from "@mui/icons-material";
+import { AppBar, Box, Button, ButtonGroup, CircularProgress, ClickAwayListener, Container, CssBaseline, Grid2, Grow, IconButton, List, ListItem, ListItemText, MenuItem, MenuList, Paper, Popper, Toolbar, Typography } from "@mui/material";
 import { green } from "@mui/material/colors";
 import { useEffect, useRef, useState } from "react";
-import styled from "styled-components"
+import styled from "styled-components";
 
 interface IFiles {
   name: string;
@@ -30,7 +30,6 @@ const options = ['Convert and Transform', 'Convert'];
 
 function readFiles(files: FileList | null) {
   console.log(files, "<<<< files");
-  // const [uploadedFiles, setUploadedFiles] = useState<IFiles[] | null>(null);
 
   if (!files) {
     return null;
