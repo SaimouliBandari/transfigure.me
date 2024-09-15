@@ -37,7 +37,7 @@ function readFiles(files: FileList | null) {
 
   const filesArray = Array.from(files);
   const response: Promise<IFiles>[] = filesArray.map((file) => {
-    return new Promise<IFiles>((res, rej) => {
+    return new Promise<IFiles>((res) => {
       const reader = new FileReader();
       reader.readAsDataURL(file)
       reader.onload = async () => {
@@ -120,22 +120,12 @@ function bytesToSize(bytes: number) {
 export default function Dashboard() {
   const [files, setFiles] = useState<IFiles[] | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(1);
   const [open, setOpen] = useState(false);
   const [convertedFiles, setConvertedFiles] = useState<any>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const anchorRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef(null);
-
-  const buttonSx = {
-    ...(success && {
-      bgcolor: green[500],
-      '&:hover': {
-        bgcolor: green[700],
-      },
-    }),
-  };
 
   useEffect(() => {
     return () => {
@@ -150,7 +140,6 @@ export default function Dashboard() {
     }
 
     if (!loading) {
-      setSuccess(false);
       setLoading(true);
     }
 
@@ -172,7 +161,6 @@ export default function Dashboard() {
     Promise.race(resolverArray).then((val) => {
       console.log(val);
       download(convertedFiles['data'])
-      setSuccess(true);
       setLoading(false);
     })
 
@@ -215,14 +203,11 @@ export default function Dashboard() {
     }
   }
 
-  const handleClick = () => {
-    console.info(`You clicked ${options[selectedIndex]}`);
-  };
-
   const handleMenuItemClick = (
     event: React.MouseEvent<HTMLLIElement, MouseEvent>,
     index: number,
   ) => {
+    if(event)
     setSelectedIndex(index);
     setOpen(false);
   };
@@ -342,7 +327,6 @@ export default function Dashboard() {
                   aria-label="Button group with a nested menu"
                   disabled={loading || !files?.length}
                 >
-                  {/* <Button onClick={handleClick}>{options[selectedIndex]}</Button> */}
 
                   <Button
                     variant="contained"                   
