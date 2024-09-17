@@ -29,7 +29,7 @@ const options = ['Convert and Transform', 'Convert'];
 
 
 function readFiles(files: FileList | null) {
-  console.log(files, "<<<< files");
+  console.log(files, "<<<< files read");
 
   if (!files) {
     return null;
