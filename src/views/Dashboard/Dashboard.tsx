@@ -5,8 +5,8 @@ import { green } from "@mui/material/colors";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import transformFile from "./dashboard.api.service";
-import { useForm } from "./useForm";
-
+import { useUpload } from "hooks/fileUpload/useUpload";
+import { useDownload } from "hooks/fileDownload/useDownload";
 interface IFiles {
   name: string;
   size: number;
@@ -94,16 +94,13 @@ function bytesToSize(bytes: number) {
 
 
 export default function Dashboard() {
-  const [files, setFiles] = useState<IFiles[] | null>(null);
+  const {files, read} = useUpload();
+  const {buttonRef, fromBase64} = useDownload({autoDownload:true});
   const [loading, setLoading] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(1);
-  const [open, setOpen] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [convertedFiles, setConvertedFiles] = useState<any>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const anchorRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef(null);
-  const form = useForm({});
   const [enableTransformation, setTransformation] = useState(false);
 
   useEffect(() => {
@@ -162,53 +159,11 @@ export default function Dashboard() {
     return () => beforeUpload()
   });
 
-  function readSaveSaveFiles(event: any) {
-    const f = readFiles(event.target.files)
-      ?.then((uploadedFiles) => {
-        if (uploadedFiles) {
-          setFiles([...uploadedFiles])
-          console.log(uploadedFiles, 'uploadedFiles');
-          console.log(files, 'filtes', event.target.files);
-        }
-      });
-    console.log(f, "files",);
-  }
-
   function beforeUpload() {
     if ((inputRef.current as any).target?.files) {
       (inputRef.current as any)['target']['files'] = null
     }
   }
-
-  const handleMenuItemClick = (
-    event: React.MouseEvent<HTMLLIElement, MouseEvent>,
-    index: number,
-  ) => {
-    if (event)
-      setSelectedIndex(index);
-    if (options[index] == 'Convert and Transform') {
-      setOpenModal(true);
-    } else {
-      setOpenModal(false);
-    }
-
-    setOpen(false);
-  };
-
-  const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen);
-  };
-
-  const handleClose = (event: Event) => {
-    if (
-      anchorRef.current &&
-      anchorRef.current.contains(event.target as HTMLElement)
-    ) {
-      return;
-    }
-
-    setOpen(false);
-  };
 
   return (
     <>
@@ -270,8 +225,9 @@ export default function Dashboard() {
                 Upload files
                 <VisuallyHiddenInput
                   type="file"
-                  onChange={(event) => readSaveSaveFiles(event)}
+                  onChange={(event) => read(event)}
                   ref={inputRef}
+                  accept=".xlsx"
                 />
               </Button>
 
@@ -305,8 +261,8 @@ export default function Dashboard() {
                 variant="contained"
                 tabIndex={-1}
                 startIcon={<CloudDownload />}
-                onClick={() => download(convertedFiles)}
                 disabled={!convertedFiles}
+                ref={buttonRef}
               >
                 Download
 

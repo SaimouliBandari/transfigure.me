@@ -14,5 +14,13 @@ export default defineConfig({
   envPrefix:'MGST',
   define: {
     'process.env': parsed
+  },
+  resolve: {
+    alias: {
+      views: '/src/views',
+      components: '/src/components',
+      hooks: '/src/hooks',
+      routers: '/src/routers'
+    }
   }
 })
