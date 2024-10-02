@@ -4,15 +4,16 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import App from './App.tsx'
 import './index.scss'
 import Dashboard from './views/Dashboard/Dashboard.tsx'
+import { StyledEngineProvider } from '@mui/material'
 
 const routes = createBrowserRouter([
   {
     path: '',
-    element: <App/>,
+    element: <App />,
     children: [
       {
         path: '/',
-        element: <Dashboard/>
+        element: <Dashboard />
       }
     ]
   }
@@ -20,6 +21,9 @@ const routes = createBrowserRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={routes}/>
+    <StyledEngineProvider injectFirst>
+      <RouterProvider router={routes} />
+    </StyledEngineProvider>
+
   </StrictMode>
 )

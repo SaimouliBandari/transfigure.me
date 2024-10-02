@@ -1,9 +1,11 @@
 
-import { ArrowDropDown, CloudDownload, CloudUpload } from "@mui/icons-material";
-import { AppBar, Box, Button, ButtonGroup, CircularProgress, ClickAwayListener, Container, CssBaseline, Grid2, Grow, IconButton, List, ListItem, ListItemText, MenuItem, MenuList, Paper, Popper, Toolbar, Typography } from "@mui/material";
+import { Close, CloudDownload, CloudUpload } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, AppBar, Box, Button, Checkbox, CircularProgress, Container, CssBaseline, Drawer, Grid2, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from "@mui/material";
 import { green } from "@mui/material/colors";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
+import transformFile from "./dashboard.api.service";
+import { useForm } from "./useForm";
 
 interface IFiles {
   name: string;
@@ -75,37 +77,11 @@ function readFiles(files: FileList | null) {
 }
 
 function saveFile(file: IFiles | null | undefined) {
-
   if (!file) {
     return;
   }
 
-  var myHeaders = new Headers();
-  myHeaders.append("Content-Type", "application/json");
-  myHeaders.append('Access-Control-Allow-Origin', '*',)
-  myHeaders.append('Accept', '*')
-
-  console.log(myHeaders, "headers");
-
-
-  var raw = JSON.stringify({
-    base64: file.data
-  });
-
-  var requestOptions: RequestInit = {
-    method: 'POST',
-    headers: myHeaders,
-    body: raw,
-    redirect: 'follow',
-    mode: 'cors'
-  };
-
-  // fetch("http://localhost:3000/upload", requestOptions)
-  //   .then(response => response.text())
-  //   .then(result => console.log(result))
-  //   .catch(error => console.log('error', error));
-  return fetch("https://ljjhen55ci.execute-api.us-east-1.amazonaws.com/upload", requestOptions)
-    .then(response => response.json());
+  return transformFile(file.data);
 }
 
 function bytesToSize(bytes: number) {
@@ -122,10 +98,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(1);
   const [open, setOpen] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const [convertedFiles, setConvertedFiles] = useState<any>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const anchorRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef(null);
+  const form = useForm({});
+  const [enableTransformation, setTransformation] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -135,6 +114,8 @@ export default function Dashboard() {
 
   const handleButtonClick = () => {
 
+
+
     if (!files) {
       return;
     }
@@ -143,41 +124,39 @@ export default function Dashboard() {
       setLoading(true);
     }
 
-    const resolverArray = [
-      new Promise((res) => {
-        setTimeout(() => {
-          res('Timed Out');
-        }, 30000);
-      })
-    ];
-    
-    saveFile(files[0])?.then((value) => {
-      setConvertedFiles(value)      
-      resolverArray.unshift(
-         Promise.resolve(value)
-      )
-    })
 
-    Promise.race(resolverArray).then((val) => {
+
+    new Promise(async (res, rej) => {
+      const value = await saveFile(files[0])
+      setConvertedFiles(value);
+      res(value);
+
+      setTimeout(() => {
+        rej('Timeout!.The Request is taking more time');
+      }, 3000)
+    }).then((val) => {
       console.log(val);
       download(convertedFiles['data'])
       setLoading(false);
+    }).catch((err) => {
+      alert(err)
     })
 
 
   };
 
-  const download = (data: any) => {
-    const element = document.createElement("a");
-    const textFile = new Blob([JSON.stringify(data, null, 2)], {type: 'text/plain'}); //pass data from localStorage API to blob
-    element.href = URL.createObjectURL(textFile);
-    element.download = "userFile.txt";
-    document.body.appendChild(element); 
-    element.click();
+  const openTransformation = () => {
+    setOpenModal(true);
   }
 
-
-  console.warn('Init');
+  const download = (data: any) => {
+    const element = document.createElement("a");
+    const textFile = new Blob([JSON.stringify(data, null, 2)], { type: 'text/plain' }); //pass data from localStorage API to blob
+    element.href = URL.createObjectURL(textFile);
+    element.download = "userFile.txt";
+    document.body.appendChild(element);
+    element.click();
+  }
 
   useEffect(() => {
     return () => beforeUpload()
@@ -195,8 +174,6 @@ export default function Dashboard() {
     console.log(f, "files",);
   }
 
-
-
   function beforeUpload() {
     if ((inputRef.current as any).target?.files) {
       (inputRef.current as any)['target']['files'] = null
@@ -207,8 +184,14 @@ export default function Dashboard() {
     event: React.MouseEvent<HTMLLIElement, MouseEvent>,
     index: number,
   ) => {
-    if(event)
-    setSelectedIndex(index);
+    if (event)
+      setSelectedIndex(index);
+    if (options[index] == 'Convert and Transform') {
+      setOpenModal(true);
+    } else {
+      setOpenModal(false);
+    }
+
     setOpen(false);
   };
 
@@ -227,27 +210,24 @@ export default function Dashboard() {
     setOpen(false);
   };
 
-
-
-
   return (
     <>
       <CssBaseline />
+      <Box component="section">
+        <AppBar position="static">
+          <Toolbar>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              sx={{ mr: 2 }}
+            >
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+      </Box>
       <Container maxWidth="xl" sx={{ height: '100%' }}>
-        <Box component="section" sx={{ "marginBottom": '10px' }}>
-          <AppBar position="static">
-            <Toolbar>
-              <IconButton
-                size="large"
-                edge="start"
-                color="inherit"
-                aria-label="menu"
-                sx={{ mr: 2 }}
-              >
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-        </Box>
 
         <Grid2 container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, xl: 3 }} height={'100%'}>
 
@@ -295,12 +275,11 @@ export default function Dashboard() {
                 />
               </Button>
 
-              {/* <Box sx={{ m: 1, position: 'relative' }}>
+              <Box sx={{ m: 1, position: 'relative' }}>
                 <Button
                   variant="contained"
-                  sx={buttonSx}
                   disabled={loading || !files?.length}
-                  onClick={handleButtonClick}
+                  onClick={openTransformation}
                 >
                   Convert File
                 </Button>
@@ -317,85 +296,7 @@ export default function Dashboard() {
                     }}
                   />
                 )}
-              </Box> */}
-
-
-              <Box sx={{ m: 2, position: 'relative' }}>
-                <ButtonGroup
-                  variant="contained"
-                  ref={anchorRef}
-                  aria-label="Button group with a nested menu"
-                  disabled={loading || !files?.length}
-                >
-
-                  <Button
-                    variant="contained"                   
-                    onClick={handleButtonClick}
-                  >
-                    {options[selectedIndex]}
-                  </Button>
-                  {loading && (
-                    <CircularProgress
-                      size={24}
-                      sx={{
-                        color: green[500],
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        marginTop: '-12px',
-                        marginLeft: '-12px',
-                      }}
-                    />
-                  )}
-
-                  <Button
-                    size="small"
-                    aria-controls={open ? 'split-button-menu' : undefined}
-                    aria-expanded={open ? 'true' : undefined}
-                    aria-label="select merge strategy"
-                    aria-haspopup="menu"
-                    onClick={handleToggle}
-                  >
-                    <ArrowDropDown />
-                  </Button>
-                </ButtonGroup>
-                <Popper
-                  sx={{ zIndex: 1 }}
-                  open={open}
-                  anchorEl={anchorRef.current}
-                  role={undefined}
-                  transition
-                  disablePortal
-                >
-                  {({ TransitionProps, placement }) => (
-                    <Grow
-                      {...TransitionProps}
-                      style={{
-                        transformOrigin:
-                          placement === 'bottom' ? 'center top' : 'center bottom',
-                      }}
-                    >
-                      <Paper>
-                        <ClickAwayListener onClickAway={handleClose}>
-                          <MenuList id="split-button-menu" autoFocusItem>
-                            {options.map((option, index) => (
-                              <MenuItem
-                                key={option}
-                                disabled={index === 2}
-                                selected={index === selectedIndex}
-                                onClick={(event) => handleMenuItemClick(event, index)}
-                              >
-                                {option}
-                              </MenuItem>
-                            ))}
-                          </MenuList>
-                        </ClickAwayListener>
-                      </Paper>
-                    </Grow>
-                  )}
-                </Popper>
               </Box>
-
               Do you wan't to download the response
 
               <Button
@@ -408,13 +309,66 @@ export default function Dashboard() {
                 disabled={!convertedFiles}
               >
                 Download
-                
+
               </Button>
 
             </Box>
           </Grid2>
         </Grid2>
       </Container >
+      <Drawer
+        anchor='right'
+        open={openModal}>
+        <Box sx={{ display: 'flex', justifyContent: 'end' }}>
+
+          <IconButton aria-label="close" sx={{ width: 'fit-content', justifySelf: 'end' }} onClick={() => setOpenModal(false)}>
+            <Close />
+          </IconButton>
+        </Box>
+        <Box sx={{ width: '100%', minWidth: 500, maxWidth: 800, bgcolor: 'background.paper', padding: '10px' }}>
+          <Accordion expanded={enableTransformation}>
+            <AccordionSummary
+              aria-controls="panel1-content"
+              id="panel1-header"
+              className="w-full"
+            >
+              <div className=" w-full flex justify-between items-center">
+                Transform
+                <Checkbox value='transform' onChange={() => setTransformation(!enableTransformation)} />
+              </div>
+            </AccordionSummary>
+            <AccordionDetails>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
+              malesuada lacus ex, sit amet blandit leo lobortis eget.
+            </AccordionDetails>
+          </Accordion>
+          <Box sx={{marginTop: '10px'}}>
+            <Typography>Excel Data</Typography>
+
+            <ListItem
+            // key={value}
+            secondaryAction={
+              <IconButton edge="end" aria-label="comments">
+                {/* <CommentIcon /> */}
+              </IconButton>
+            }
+            disablePadding
+          >
+            <ListItemButton role={undefined} dense>
+              <ListItemIcon>
+                <Checkbox
+                  edge="start"
+                  tabIndex={-1}
+                  disableRipple
+                />
+              </ListItemIcon>
+              <ListItemText  />
+            </ListItemButton>
+          </ListItem>
+          </Box>
+        </Box>
+      </Drawer>
     </>
   )
 }
+
