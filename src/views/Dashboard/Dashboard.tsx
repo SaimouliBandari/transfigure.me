@@ -1,18 +1,77 @@
 
 import { Close, CloudDownload, CloudUpload } from "@mui/icons-material";
-import { Accordion, AccordionDetails, AccordionSummary, AppBar, Box, Button, Checkbox, CircularProgress, Container, CssBaseline, Drawer, Grid2, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, AppBar, Box, Button, Checkbox, CircularProgress, Container, CssBaseline, Drawer, Grid2, Icon, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Paper, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, Toolbar, Typography } from "@mui/material";
 import { green } from "@mui/material/colors";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import transformFile from "./dashboard.api.service";
 import { useUpload } from "hooks/fileUpload/useUpload";
 import { useDownload } from "hooks/fileDownload/useDownload";
+import excelImg from '/src/assets/web/xlsx-32.png';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useExcel } from "hooks/excel/useExcel";
+
+
 interface IFiles {
   name: string;
   size: number;
   lastModified: number;
   data: string;
 }
+
+const columns: GridColDef<(typeof rows)[number]>[] = [
+  { field: 'columnName', headerName: 'Column Name', width: 90 },
+  {
+    field: 'aliasName',
+    headerName: 'Alias name',
+    width: 150,
+    editable: true,
+  },
+];
+
+const rows = [
+  { id: 1, columnName: 'Snow', aliasName: 'Jon', age: 14 },
+  { id: 2, columnName: 'Lannister', aliasName: 'Cersei', age: 31 },
+  { id: 3, columnName: 'Lannister', aliasName: 'Jaime', age: 31 },
+  { id: 4, columnName: 'Stark', aliasName: 'Arya', age: 11 },
+  { id: 5, columnName: 'Targaryen', aliasName: 'Daenerys', age: null },
+  { id: 6, columnName: 'Melisandre', aliasName: null, age: 150 },
+  { id: 7, columnName: 'Clifford', aliasName: 'Ferrara', age: 44 },
+  { id: 8, columnName: 'Frances', aliasName: 'Rossini', age: 36 },
+  { id: 9, columnName: 'Roxie', aliasName: 'Harvey', age: 65 },
+];
+
+function createTransformationData(data: Record<string, any>) {
+  const rows = []
+  let i=0;
+  for (const key in data) {
+    rows.push({
+      id: i++,
+      columnName: key,
+      aliasName: key,
+      age:null
+    })
+  }
+  return rows;
+}
+
+function createData(
+  name: string,
+  calories: number,
+  fat: number,
+  carbs: number,
+  protein: number,
+) {
+  return { name, calories, fat, carbs, protein };
+}
+
+const tRows = [
+  createData('Frozen yoghurt', 159, 6.0, 24, 4.0),
+  createData('Ice cream sandwich', 237, 9.0, 37, 4.3),
+  createData('Eclair', 262, 16.0, 24, 6.0),
+  createData('Cupcake', 305, 3.7, 67, 4.3),
+  createData('Gingerbread', 356, 16.0, 49, 3.9),
+];
 
 
 const VisuallyHiddenInput = styled('input')({
@@ -27,60 +86,14 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-const options = ['Convert and Transform', 'Convert'];
 
 
-function readFiles(files: FileList | null) {
-  console.log(files, "<<<< files");
 
-  if (!files) {
-    return null;
-  }
-
-  const filesArray = Array.from(files);
-  const response: Promise<IFiles>[] = filesArray.map((file) => {
-    return new Promise<IFiles>((res) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file)
-      reader.onload = async () => {
-        console.warn('taking time');
-        try {
-          res(
-            {
-              name: file.name,
-              size: file.size,
-              lastModified: file.lastModified,
-              data: (reader.result as string).split('base64,')[1]
-            }
-          )
-
-        } catch (error) {
-          res({
-            name: file.name,
-            size: file.size,
-            lastModified: file.lastModified,
-            data: "Error While Reading Files"
-          })
-
-        }
-      }
-    }).then((val) => {
-      console.log(val);
-      // response.push(val);
-      return val;
-    })
-  })
-
-
-  console.log('response, ', response);
-  return Promise.all(response);
-}
 
 function saveFile(file: IFiles | null | undefined) {
   if (!file) {
     return;
   }
-
   return transformFile(file.data);
 }
 
@@ -94,20 +107,47 @@ function bytesToSize(bytes: number) {
 
 
 export default function Dashboard() {
-  const {files, read} = useUpload();
-  const {buttonRef, fromBase64} = useDownload({autoDownload:true});
+  const { files, read } = useUpload();
+  const { buttonRef, fromBase64 } = useDownload({ autoDownload: true });
   const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [convertedFiles, setConvertedFiles] = useState<any>(null);
+  const [selectedSheet, setSelectedSheet] = useState('');
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const inputRef = useRef(null);
   const [enableTransformation, setTransformation] = useState(false);
+  const excel = useExcel()
+  const [excelData, setExcelData] = useState<any>();
+  const [sheets, setSheets] = useState<any>();
+  const [sheetWiseKeys, setSheetWiseKeys] = useState<Record<string, string[]> | null>();
+  const [sheetWiseTransformationData, setSheetWiseTransformationData] = useState<any>();
 
   useEffect(() => {
     return () => {
       clearTimeout(timer.current);
+      setSheets(null);
+      setSelectedSheet('');
     };
   }, []);
+
+  useEffect(() => {
+    if (files) {
+      const data = excel.read(files[0].data);
+      setExcelData(data);
+      const sheets: Record<string, any> = {};
+      const sheetWiseKeys: Record<string, any> = {};
+      const sheetWiseTransformation: Record<string,any> = {}
+      for (let sheet in data) {
+        sheets[sheet] = data[sheet].slice(0, 5);
+        sheetWiseKeys[sheet] = Object.keys(data[sheet][0] || {}) || [];
+        sheetWiseTransformation[sheet] = createTransformationData(sheets[sheet][0] || {}) 
+      }
+      setSheetWiseKeys(sheetWiseKeys)
+      setSheets(sheets);
+      setSelectedSheet(excel.sheetNames?.[0] || '')
+      setSheetWiseTransformationData(sheetWiseTransformation);
+    }
+  }, [files])
 
   const handleButtonClick = () => {
 
@@ -143,8 +183,13 @@ export default function Dashboard() {
   };
 
   const openTransformation = () => {
-    setOpenModal(true);
+    if (excelData) {
+      setOpenModal(true);
+    }
+
   }
+
+
 
   const download = (data: any) => {
     const element = document.createElement("a");
@@ -160,9 +205,19 @@ export default function Dashboard() {
   });
 
   function beforeUpload() {
-    if ((inputRef.current as any).target?.files) {
+    if ((inputRef.current as any)?.target?.files) {
       (inputRef.current as any)['target']['files'] = null
     }
+  }
+
+  function setTransformedData({row}:any, eve:any){
+      setSheetWiseTransformationData((pre:any) => {
+        const indx = pre[selectedSheet]?.findIndex((ele:any) => ele.columnName === row.columnName);
+        console.log(row, "param.columnName");
+        
+        pre[selectedSheet][indx].aliasName = eve.target.value;
+        return pre;
+      })
   }
 
   return (
@@ -188,20 +243,22 @@ export default function Dashboard() {
 
           <Grid2 size={4}>
             <Typography variant="h6" display="flex" justifyContent="start">
-              Files Uploaded
+              Uploaded
             </Typography>
 
             <List sx={{ width: '100%', background: 'background.paper' }}>
               {
                 files?.map((file) =>
-                  <ListItem alignItems="flex-start">
+                  <ListItem alignItems="flex-start" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} key={file.name}>
+                    <ListItemIcon>
+                      <img src={excelImg} />
+                    </ListItemIcon>
                     <ListItemText primary={<>
                       <Typography
                         component="p"
-                        variant="h6"
                         sx={{ color: 'text.primary' }}
                       >
-                        {file.name}
+                        {file.name.replace(/.xlsx|.xls/, '')}
                       </Typography>
                       {bytesToSize(file.size)}
                     </>}
@@ -265,9 +322,7 @@ export default function Dashboard() {
                 ref={buttonRef}
               >
                 Download
-
               </Button>
-
             </Box>
           </Grid2>
         </Grid2>
@@ -282,7 +337,103 @@ export default function Dashboard() {
           </IconButton>
         </Box>
         <Box sx={{ width: '100%', minWidth: 500, maxWidth: 800, bgcolor: 'background.paper', padding: '10px' }}>
-          <Accordion expanded={enableTransformation}>
+
+          <div className=" my-2">
+            <Typography className="text-xl border rounded-lg p-3 my-2">
+              Excel Data
+            </Typography>
+            <Box sx={{ height: 400, width: '100%' }}>
+              <div className="backdrop-blur-sm box-border border h-full rounded-lg shadow-md">
+                <Tabs aria-label="basic tabs example" sx={{ overflowX: 'scroll' }} value={0}>
+                  {
+                    excel.sheetNames?.map((sheet, index) => <Tab label={sheet} key={index} onClick={() => setSelectedSheet(sheet)} />)
+                  }
+                </Tabs>
+
+                {/* <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
+                  {sheets[selectedSheet].map((value:any) => {
+                    const labelId = `checkbox-list-label-${value}`;
+
+                    return (
+                      <ListItem
+                        key={value}
+                        secondaryAction={
+                          <IconButton edge="end" aria-label="comments">
+                          </IconButton>
+                        }
+                        disablePadding
+                      >
+                        <ListItemButton role={undefined} dense>
+                          <ListItemIcon>
+                            <Checkbox
+                              edge="start"
+                              tabIndex={-1}
+                              disableRipple
+                              inputProps={{ 'aria-labelledby': labelId }}
+                            />
+                          </ListItemIcon>
+                          <ListItemText id={labelId} primary={`Line item ${value + 1}`} />
+                        </ListItemButton>
+                      </ListItem>
+                    );
+                  })}
+                  <ListItem
+                        key={5}
+                        secondaryAction={
+                          <IconButton edge="end" aria-label="comments">
+                          </IconButton>
+                        }
+                        disablePadding
+                      >
+                        <ListItemButton role={undefined} dense>
+                          <ListItemIcon>
+                            <Checkbox
+                              edge="start"
+                              tabIndex={-1}
+                              disableRipple
+                              inputProps={{ 'aria-labelledby': 'labelId' }}
+                            />
+                          </ListItemIcon>
+                          <ListItemText id={'labelId'} primary={`Line item ${5 + 1}`} />
+                        </ListItemButton>
+                      </ListItem>
+                </List> */}
+
+                <TableContainer>
+                  <Table sx={{ minWidth: 500, overflow: 'scroll' }} aria-label="simple table" size="medium">
+                    <TableHead>
+                      <TableRow>
+                        {sheetWiseKeys?.[selectedSheet]?.map((key) => <TableCell>
+                          <Typography className="truncate">
+                            {key}
+                          </Typography>
+                        </TableCell>)}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {sheets?.[selectedSheet]?.map((row: any) => (
+
+                        <TableRow
+                          key={row.name}
+                          sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                        >
+                          {sheetWiseKeys?.[selectedSheet].map((key) => <TableCell component="th" scope="row">
+                            <Typography className="truncate">
+
+                              {row[key]}
+                            </Typography>
+                          </TableCell>)}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </div>
+            </Box>
+
+          </div>
+
+          <Accordion expanded={enableTransformation} className="rounded-lg">
             <AccordionSummary
               aria-controls="panel1-content"
               id="panel1-header"
@@ -294,34 +445,33 @@ export default function Dashboard() {
               </div>
             </AccordionSummary>
             <AccordionDetails>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
-              malesuada lacus ex, sit amet blandit leo lobortis eget.
+              <Box sx={{ maxHeight: 400, width: '100%' }}>
+                <Tabs aria-label="basic tabs example" sx={{ overflowX: 'scroll' }} value={0}>
+                  {
+                    excel.sheetNames?.map((sheet, index) => <Tab label={sheet} key={index} onClick={() => setSelectedSheet(sheet)} />)
+                  }
+                </Tabs>
+                <DataGrid
+                  rows={sheetWiseTransformationData?.[selectedSheet]|| {}}
+                  columns={columns}
+                  initialState={{
+                    pagination: {
+                      paginationModel: {
+                        pageSize: 5,
+                      },
+                    },
+                  }}
+                  pageSizeOptions={[5]}
+                  checkboxSelection
+                  disableRowSelectionOnClick
+                  onCellEditStop={(param, eve:any) => setTransformedData(param,eve)}
+                />
+              </Box>
             </AccordionDetails>
           </Accordion>
-          <Box sx={{marginTop: '10px'}}>
-            <Typography>Excel Data</Typography>
-
-            <ListItem
-            // key={value}
-            secondaryAction={
-              <IconButton edge="end" aria-label="comments">
-                {/* <CommentIcon /> */}
-              </IconButton>
-            }
-            disablePadding
-          >
-            <ListItemButton role={undefined} dense>
-              <ListItemIcon>
-                <Checkbox
-                  edge="start"
-                  tabIndex={-1}
-                  disableRipple
-                />
-              </ListItemIcon>
-              <ListItemText  />
-            </ListItemButton>
-          </ListItem>
-          </Box>
+          <Button onClick={() => console.log(sheetWiseTransformationData)}>
+            submit
+          </Button>
         </Box>
       </Drawer>
     </>

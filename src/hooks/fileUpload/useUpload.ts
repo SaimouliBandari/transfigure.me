@@ -8,7 +8,7 @@ export interface IFiles {
 }
 
 export function useUpload() {
-  const [files, setFiles] = useState<IFiles[]>();
+  const [files, setFiles] = useState<IFiles[]|null>();
 
   function readFiles(files: FileList | null) {
 
@@ -54,6 +54,7 @@ export function useUpload() {
 
   return {
     read($event: any) {
+        setFiles(null)
         readFiles($event.target.files);
     },
     files
