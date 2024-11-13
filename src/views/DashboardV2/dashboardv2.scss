@@ -1,0 +1,28 @@
+.format {
+  @apply flex items-center justify-between;
+  span {
+    @apply flex items-center justify-start rounded-md p-1;
+    width: 240px;
+    padding-right: 2rem;
+    border: 1px solid;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+
+    &:nth-last-child(2) {
+      margin: 0.5rem;
+    }
+
+    &.active {
+      @apply border-primary border-[1px] text-primary;
+      img {
+        filter: invert(19%) sepia(100%) saturate(2609%) hue-rotate(224deg)
+          brightness(90%) contrast(96%);
+      }
+    }
+
+    img {
+      height: 3rem;
+      margin-left: auto;
+    }
+  }
+}

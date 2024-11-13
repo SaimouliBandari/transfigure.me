@@ -13,7 +13,8 @@ export default defineConfig({
   },
   envPrefix:'MGST',
   define: {
-    'process.env': parsed
+    'process.env': parsed,
+    global: {}
   },
   resolve: {
     alias: {
