@@ -1,6 +1,7 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 @import "tailwindcss/base";
+@import url('./styles/base/variables.scss');
 
 
 #root {
@@ -10,4 +11,6 @@
 
 html {
     background-color: #E5E7EB;
+    font-family: Roboto;
 }
+

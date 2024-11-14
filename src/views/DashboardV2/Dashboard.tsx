@@ -72,20 +72,26 @@ function Dashboard() {
           </div>
 
           <div className="my-3">
-            Column Customization Options
+            Column Customization
           </div>
 
-          <div className="flex my-1 rounded-md border-primary border-2 w-fit shadow-lg">
+          {/* <div className="flex my-1 rounded-md border-primary border-2 w-fit shadow-lg">
             <span className={classNames("py-2 px-4", {"bg-primary text-white" : colOptions == "simple"})} onClick={() => setColOptions('simple')}>
               Simple
             </span>
             <span className={classNames("py-2 px-4", {"bg-primary text-white" : colOptions == "advance"})} onClick={() => setColOptions('advance')}>
               Advance
             </span>
-          </div>
+          </div> */}
 
           <div className="table">
-            
+            <div className='w-[100%] flex justify-between items-center'>
+                <input className='my-3 p-1 w-[46%] bg-slate-100 rounded-md border-[1px]' type="text" name="search" id="search" />
+                <span>
+                  <button className=' w-[120px] bg-[var(--blue-track)] text-white p-1 rounded-md me-2' type="button">+ Columns</button>
+                  <button className=' w-[120px] bg-white p-1 rounded-md border-[1px]' type="button">Filter</button>
+                </span>
+            </div>
           </div>
         </div>
       </div>
