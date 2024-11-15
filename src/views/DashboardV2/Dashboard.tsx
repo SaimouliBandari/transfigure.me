@@ -18,11 +18,11 @@ function Dashboard() {
 
 
   return (
-    <div className="h-full w-full ">
+    <div className="h-full w-full">
       <nav className="w-full bg-[#FFFFFF] h-[64px] border-b-1 shadow-sm mb-12">
       </nav>
 
-      <div className="w-[80%] h-[400px] shadow-md bg-[#FFFFFF] rounded-lg mx-auto p-12">
+      <div className="w-[80%] min-h-[400px] shadow-md bg-[#FFFFFF] rounded-lg mx-auto p-12">
         <div className='flex flex-col justify-center'>
           <div className="w-full border-gray-500 border-dashed rounded-md h-[80px] border-[1px] mx-auto relative flex items-center">
             <img src={excelImg} className="h-[60%] ms-6" />
@@ -43,26 +43,26 @@ function Dashboard() {
             Select Output Format
           </div>
           <div className='format'>
-            <span className={classNames({'active': outputFormat == 'json'})} onClick={() => setOutputFormat('json')}>
+            <span className={classNames({ 'active': outputFormat == 'json' })} onClick={() => setOutputFormat('json')}>
               <text className="ml-3">
                 JSON
               </text>
               {/* <img src={json} className=' fill-transparent'/> */}
 
             </span >
-            <span className={classNames({'active': outputFormat == 'xls'})} onClick={() => setOutputFormat('xls')}>
+            <span className={classNames({ 'active': outputFormat == 'xls' })} onClick={() => setOutputFormat('xls')}>
               <text className="ml-3">
                 EXCEL
               </text>
               {/* <img src={excel} /> */}
             </span>
-            <span className={classNames({'active': outputFormat == 'csv'})} onClick={() => setOutputFormat('csv')}>
+            <span className={classNames({ 'active': outputFormat == 'csv' })} onClick={() => setOutputFormat('csv')}>
               <text className="ml-3">
                 CSV
               </text>
               {/* <img src={csv} /> */}
             </span>
-            <span className={classNames({'active': outputFormat == 'html'})} onClick={() => setOutputFormat('html')}>
+            <span className={classNames({ 'active': outputFormat == 'html' })} onClick={() => setOutputFormat('html')}>
               <text className="ml-3">
                 HTML
               </text>
@@ -84,13 +84,69 @@ function Dashboard() {
             </span>
           </div> */}
 
-          <div className="table">
-            <div className='w-[100%] flex justify-between items-center'>
-                <input className='my-3 p-1 w-[46%] bg-slate-100 rounded-md border-[1px]' type="text" name="search" id="search" />
-                <span>
-                  <button className=' w-[120px] bg-[var(--blue-track)] text-white p-1 rounded-md me-2' type="button">+ Columns</button>
-                  <button className=' w-[120px] bg-white p-1 rounded-md border-[1px]' type="button">Filter</button>
-                </span>
+          <div className="table-container rounded-md">
+            <div className='options'>
+              <input className='my-3 p-1 w-[46%] bg-slate-100 rounded-md border-[1px]' type="text" name="search" id="search" />
+              <span>
+                <button className=' w-[120px] bg-[var(--blue-track)] text-white p-1 rounded-md me-2' type="button">+ Columns</button>
+                <button className=' w-[120px] bg-white p-1 rounded-md border-[1px]' type="button">Filter</button>
+              </span>
+
+            </div>
+            {/* <div className='w-[100%] flex justify-between items-center'>
+              <span>Column Name</span>
+              <span>Data Type</span>
+              <span>Custom Value</span>
+              <span>Action</span>
+              <span></span>
+
+            </div> */}
+
+            <table className="column-customization table-auto w-[100%]">
+              <thead>
+                <tr>
+                  <td>Column Name</td>
+                  <td>Data Type</td>
+                  <td>Custom Value</td>
+                  <td>Action</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>The Sliding Mr. Bones (Next Stop, Pottersville)</td>
+                  <td>Malcolm Lockyer</td>
+                  <td>1961</td>
+                  <td>
+                    <button>Edit</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Witchy Woman</td>
+                  <td>The Eagles</td>
+                  <td>1972</td>
+                  <td>
+                    <button>Edit</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Shining Star</td>
+                  <td>Earth, Wind, and Fire</td>
+                  <td>1975</td>
+                  <td>
+                    <button>Edit</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className='pagination'>
+              <div>
+                Showing 1-5 of 50
+              </div>
+
+              <div>
+                
+              </div>
             </div>
           </div>
         </div>

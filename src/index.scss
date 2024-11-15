@@ -1,16 +1,22 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 @import "tailwindcss/base";
-@import url('./styles/base/variables.scss');
-
+@import url("./styles/base/variables.scss");
 
 #root {
-    width: 100%;
-    height: calc(100vh - 40px);
+  width: 100%;
+  height: calc(100vh - 40px);
+  font-family: Inter, sans-serif;
+  font-feature-settings: "liga" 1, "calt" 1; /* fix for Chrome */
+}
+@supports (font-variation-settings: normal) {
+  :root {
+    font-family: InterVariable, sans-serif;
+  }
 }
 
 html {
-    background-color: #E5E7EB;
-    font-family: Roboto;
+  background-color: #e5e7eb;
+  font-family: Inter !important;
+  font-weight:200;
 }
-

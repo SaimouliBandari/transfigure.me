@@ -26,3 +26,60 @@
     }
   }
 }
+
+.table-container{
+  border: 1px dashed rgb(210, 208, 208);
+
+  .options {
+    display: flex;
+    align-items:center;
+    justify-content: space-between;
+    padding: 10px;
+  }
+
+  .column-customization{
+    td {
+      padding: 8px;
+    }
+    thead {
+      @apply bg-slate-100;
+    }
+  
+    tbody{
+      tr {
+        border-bottom: 1px solid rgb(225, 223, 223);
+      }
+
+      button {
+        background: var(--blue-4);
+        padding: 1px 10px;
+        border-radius: 4px;
+        color: var(--blue-10);
+
+        &:hover {
+          background: var(--blue-9);
+          color: var(--blue-1);
+        }
+
+      }
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      .info {
+
+      }
+
+      .navigation {
+        display: flex;
+        justify-content:space-around;
+        align-items: center;
+        .right-carrot {
+          padding: 6px;
+        }
+      }
+    }
+  }
+}
+
