@@ -65,19 +65,9 @@
     }
 
     .pagination {
-      display: flex;
-      justify-content: space-between;
-      .info {
-
-      }
-
-      .navigation {
-        display: flex;
-        justify-content:space-around;
-        align-items: center;
-        .right-carrot {
-          padding: 6px;
-        }
+      @apply p-2;
+      nav{
+        justify-self: end;
       }
     }
   }

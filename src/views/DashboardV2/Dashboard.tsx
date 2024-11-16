@@ -7,19 +7,25 @@ import excelImg from '/src/assets/web/upload-cloud.svg';
 import './dashboardv2.scss'
 import { useState } from 'react';
 import classNames from 'classnames';
+import { Pagination } from '@mui/material';
+import CustomModal from 'components/Modal/Modal';
 
 type IOutFormat = 'json' | 'xls' | 'csv' | 'html';
 type IColOptions = 'simple' | 'advance';
+
+
 
 function Dashboard() {
 
   const [outputFormat, setOutputFormat] = useState<IOutFormat>('json');
   const [colOptions, setColOptions] = useState<IColOptions>('simple');
+  const [open, setOpen] = useState(false);
+
 
 
   return (
     <div className="h-full w-full">
-      <nav className="w-full bg-[#FFFFFF] h-[64px] border-b-1 shadow-sm mb-12">
+      <nav className="w-full bg-[#FFFFFF] h-[60px] border-b-1 shadow-sm mb-6">
       </nav>
 
       <div className="w-[80%] min-h-[400px] shadow-md bg-[#FFFFFF] rounded-lg mx-auto p-12">
@@ -47,42 +53,28 @@ function Dashboard() {
               <text className="ml-3">
                 JSON
               </text>
-              {/* <img src={json} className=' fill-transparent'/> */}
 
             </span >
             <span className={classNames({ 'active': outputFormat == 'xls' })} onClick={() => setOutputFormat('xls')}>
               <text className="ml-3">
                 EXCEL
               </text>
-              {/* <img src={excel} /> */}
             </span>
             <span className={classNames({ 'active': outputFormat == 'csv' })} onClick={() => setOutputFormat('csv')}>
               <text className="ml-3">
                 CSV
               </text>
-              {/* <img src={csv} /> */}
             </span>
             <span className={classNames({ 'active': outputFormat == 'html' })} onClick={() => setOutputFormat('html')}>
               <text className="ml-3">
                 HTML
               </text>
-              {/* <img src={html} /> */}
             </span>
-
           </div>
 
           <div className="my-3">
             Column Customization
           </div>
-
-          {/* <div className="flex my-1 rounded-md border-primary border-2 w-fit shadow-lg">
-            <span className={classNames("py-2 px-4", {"bg-primary text-white" : colOptions == "simple"})} onClick={() => setColOptions('simple')}>
-              Simple
-            </span>
-            <span className={classNames("py-2 px-4", {"bg-primary text-white" : colOptions == "advance"})} onClick={() => setColOptions('advance')}>
-              Advance
-            </span>
-          </div> */}
 
           <div className="table-container rounded-md">
             <div className='options'>
@@ -91,21 +83,12 @@ function Dashboard() {
                 <button className=' w-[120px] bg-[var(--blue-track)] text-white p-1 rounded-md me-2' type="button">+ Columns</button>
                 <button className=' w-[120px] bg-white p-1 rounded-md border-[1px]' type="button">Filter</button>
               </span>
-
             </div>
-            {/* <div className='w-[100%] flex justify-between items-center'>
-              <span>Column Name</span>
-              <span>Data Type</span>
-              <span>Custom Value</span>
-              <span>Action</span>
-              <span></span>
-
-            </div> */}
-
             <table className="column-customization table-auto w-[100%]">
               <thead>
                 <tr>
                   <td>Column Name</td>
+                  <td>Modified name</td>
                   <td>Data Type</td>
                   <td>Custom Value</td>
                   <td>Action</td>
@@ -113,48 +96,44 @@ function Dashboard() {
               </thead>
               <tbody>
                 <tr>
-                  <td>The Sliding Mr. Bones (Next Stop, Pottersville)</td>
-                  <td>Malcolm Lockyer</td>
-                  <td>1961</td>
+                  <td>Name</td>
+                  <td>username</td>
+                  <td>String</td>
+                  <td>Mouli.</td>
                   <td>
-                    <button>Edit</button>
+                    <button onClick={() => setOpen(!open)}>Edit</button>
                   </td>
                 </tr>
                 <tr>
-                  <td>Witchy Woman</td>
-                  <td>The Eagles</td>
-                  <td>1972</td>
+                  <td>Address</td>
+                  <td>address</td>
+                  <td>String</td>
+                  <td>vskp</td>
                   <td>
-                    <button>Edit</button>
+                    <button onClick={() => setOpen(!open)}>Edit</button>
+
                   </td>
                 </tr>
                 <tr>
-                  <td>Shining Star</td>
-                  <td>Earth, Wind, and Fire</td>
-                  <td>1975</td>
+                  <td>Number</td>
+                  <td>---</td>
+                  <td>Number</td>
+                  <td>89223423232</td>
                   <td>
-                    <button>Edit</button>
+                    <button onClick={() => setOpen(!open)}>Edit</button>
+
                   </td>
                 </tr>
               </tbody>
             </table>
-
-            <div className='pagination'>
-              <div>
-                Showing 1-5 of 50
-              </div>
-
-              <div>
-                
-              </div>
-            </div>
+            <Pagination count={5} variant="outlined" shape="rounded" className='justify-self-end p-2' />
           </div>
         </div>
       </div>
+      <CustomModal open={open} setOpen={setOpen} />
     </div>
+
   )
 }
 
 export default Dashboard
-
-{/* <a target="_blank" href="https://icons8.com/icon/111774/xls">XLS</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a> */ }
