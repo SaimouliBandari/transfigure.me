@@ -5,8 +5,8 @@ import { green } from "@mui/material/colors";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import transformFile from "./dashboard.api.service";
-import { useUpload } from "hooks/fileUpload/useUpload";
-import { useDownload } from "hooks/fileDownload/useDownload";
+import { useUpload } from "hooks/files/useUpload";
+import { useDownload } from "hooks/files/useDownload";
 import excelImg from '/src/assets/web/xlsx-32.png';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useExcel } from "hooks/excel/useExcel";
@@ -121,7 +121,7 @@ function AddNewColumn({selectedSheet, setSheetWiseTransformationData}:any) {
 }
 
 export default function Dashboard() {
-  const { files, read } = useUpload();
+  const [ files, read ] = useUpload();
   const { buttonRef, fromBase64 } = useDownload({ autoDownload: true });
   const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
