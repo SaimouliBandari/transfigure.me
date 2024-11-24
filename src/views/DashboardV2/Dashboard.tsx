@@ -1,14 +1,13 @@
 
 import excelImg from '/src/assets/web/upload-cloud.svg';
-// import json from '/src/assets/web/i8json.svg'
-// import excel from '/src/assets/web/ixls.svg'
-// import csv from '/src/assets/web/icsv.svg'
-// import html from '/src/assets/web/html-5.svg'
 import './dashboardv2.scss'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { Pagination } from '@mui/material';
 import CustomModal from 'components/Modal/Modal';
+import { useUpload } from 'hooks/files/useUpload';
+import transformFile from './dashboard.api.service';
+import {toast}  from 'sonner';
 
 type IOutFormat = 'json' | 'xls' | 'csv' | 'html';
 type IColOptions = 'simple' | 'advance';
@@ -18,19 +17,42 @@ type IColOptions = 'simple' | 'advance';
 function Dashboard() {
 
   const [outputFormat, setOutputFormat] = useState<IOutFormat>('json');
-  const [colOptions, setColOptions] = useState<IColOptions>('simple');
-  const [open, setOpen] = useState(false);
+  const [files, setFile] = useUpload();
 
+  console.log(files);
+
+  // useEffect(() => {
+  //   if (files) {
+  //     transformFile(outputFormat, files[0].data)
+  //   }
+  // }, [files?.[0]?.data])
+
+  const transform = () => {
+    if(files){
+      const promiseHolder = Promise.all([
+        transformFile(outputFormat, files[0].data),
+        new Promise(res => setTimeout(() => {
+          res(true);
+        }, 1000))
+      ])
+
+      toast.promise(promiseHolder, {
+        'loading': 'Converting...',
+        'success': 'Successfully converted.',
+        'error': 'Error while converting.'
+      })
+    }
+  }
 
 
   return (
     <div className="h-full w-full">
-      <nav className="w-full bg-[#FFFFFF] h-[60px] border-b-1 shadow-sm mb-6">
+      <nav className="w-full bg-secondary-2 h-[64px] border-b-1 shadow-sm mb-12">
       </nav>
 
-      <div className="w-[80%] min-h-[400px] shadow-md bg-[#FFFFFF] rounded-lg mx-auto p-12">
+      <div className="w-[80%] min-h-[400px] max-w-[1300px] shadow-md bg-secondary-2 rounded-lg mx-auto p-12 relative">
         <div className='flex flex-col justify-center'>
-          <div className="w-full border-gray-500 border-dashed rounded-md h-[80px] border-[1px] mx-auto relative flex items-center">
+          <div className="upload w-full border-border-g3 border-dashed rounded-md h-[80px] border-[1px] mx-auto relative flex items-center">
             <img src={excelImg} className="h-[60%] ms-6" />
             <div className="mx-auto flex justify-center items-center flex-col">
               <div>
@@ -40,9 +62,19 @@ function Dashboard() {
                 xlsx, xls, File size no more than 10MB
               </div>
             </div>
-            <button className='w-[120px] h-[40px] rounded-lg text-primary me-6 border-primary border-[1px]'>
+            <input
+              accept="*"
+              id="icon-button-file"
+              type="file"
+              style={{ display: "none" }}
+              onChange={(e) => setFile(e)}
+            />
+            {/* <label htmlFor="icon-button-file"> */}
+
+            <label htmlFor="icon-button-file" className='select flex justify-center items-center w-[120px] h-[40px] rounded-lg text-text-g2 me-6 border-solid-1 border-[1px]'>
               Select
-            </button>
+            </label>
+            {/* </label> */}
           </div>
 
           <div className='my-3'>
@@ -72,11 +104,11 @@ function Dashboard() {
             </span>
           </div>
 
-          <div className="my-3">
+          {/* <div className="my-3">
             Column Customization
-          </div>
+          </div> */}
 
-          <div className="table-container rounded-md">
+          {/* <div className="table-container rounded-md">
             <div className='options'>
               <input className='my-3 p-1 w-[46%] bg-slate-100 rounded-md border-[1px]' type="text" name="search" id="search" />
               <span>
@@ -126,11 +158,29 @@ function Dashboard() {
                 </tr>
               </tbody>
             </table>
-            <Pagination count={5} variant="outlined" shape="rounded" className='justify-self-end p-2' />
-          </div>
+
+            <div className='pagination'>
+              <div>
+                Showing 1-5 of 50
+              </div>
+
+              <div>
+                
+              </div>
+            </div>
+          </div> */}
+
+
+        </div>
+        <div className='flex justify-end absolute my-6 mx-12 left-0 right-0'>
+          {/* <div className='btn-backdrop'> */}
+            <button type="button" className='convert' onClick={transform}>
+              Convert
+            </button>
+          {/* </div> */}
         </div>
       </div>
-      <CustomModal open={open} setOpen={setOpen} />
+      {/* <CustomModal open={open} setOpen={setOpen} /> */}
     </div>
 
   )
