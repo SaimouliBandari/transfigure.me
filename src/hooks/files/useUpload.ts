@@ -7,15 +7,14 @@ export interface IFiles {
   data: string;
 }
 
-export function useUpload() {
-  const [files, setFiles] = useState<IFiles[]|null>();
+export function useUpload():[IFiles[] | null,Function] {
+  const [files, setFiles] = useState<IFiles[] | null>(null);
 
   function readFiles(files: FileList | null) {
-
     console.log("files :>>", files);
 
     if (!files) {
-      console.warn('No File Upload:>>', files); 
+      console.warn("No File Upload:>>", files);
       return null;
     }
 
@@ -52,11 +51,13 @@ export function useUpload() {
     Promise.all(response).then((UpFiles) => setFiles(UpFiles));
   }
 
-  return {
-    read($event: any) {
-        setFiles(null)
-        readFiles($event.target.files);
-    },
-    files
-  };
+  function read($event: any) {
+    setFiles(null);
+    readFiles($event.target.files);
+  }
+
+  return [
+    files||null,
+    read
+  ];
 }
