@@ -5,7 +5,7 @@ import App from './App.tsx'
 import './index.scss'
 // import Dashboard from './views/Dashboard/Dashboard.tsx'
 import { StyledEngineProvider } from '@mui/material'
-import Dashboard from 'views/DashboardV2/Dashboard.tsx'
+import Dashboard from 'views/dashboard/dashboard.tsx'
 
 const routes = createBrowserRouter([
   {
@@ -25,6 +25,5 @@ createRoot(document.getElementById('root')!).render(
     <StyledEngineProvider injectFirst>
       <RouterProvider router={routes} />
     </StyledEngineProvider>
-
   </StrictMode>
 )

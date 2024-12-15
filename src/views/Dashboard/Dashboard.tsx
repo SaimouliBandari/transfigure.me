@@ -1,446 +1,247 @@
-
-import { Add, Close, CloudDownload, CloudUpload } from "@mui/icons-material";
-import { Accordion, AccordionDetails, AccordionSummary, AppBar, Box, Button, Checkbox, CircularProgress, Container, CssBaseline, Drawer, Grid2, Icon, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Paper, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Toolbar, Typography } from "@mui/material";
-import { green } from "@mui/material/colors";
-import { useEffect, useRef, useState } from "react";
-import styled from "styled-components";
-import transformFile from "./dashboard.api.service";
+import classNames from "classnames";
 import { useUpload } from "hooks/files/useUpload";
-import { useDownload } from "hooks/files/useDownload";
-import excelImg from '/src/assets/web/xlsx-32.png';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { useExcel } from "hooks/excel/useExcel";
+import { useState } from "react";
+import { toast } from "sonner";
+import transformFile from "./dashboard.api.service";
+import "./dashboard.scss";
+import excelImg from "/src/assets/web/upload-cloud.svg";
 
-interface IFiles {
-  name: string;
-  size: number;
-  lastModified: number;
-  data: string;
-}
+type IOutFormat = "json" | "xls" | "csv" | "html";
+type IColOptions = "simple" | "advance";
 
-const columns: GridColDef<any>[] = [
-  { field: 'columnName', headerName: 'Column Name', width: 150 },
-  {
-    field: 'aliasName',
-    headerName: 'Alias name',
-    width: 150,
-    editable: true,
-  },
-  {
-    field: 'valueForColumn',
-    headerName: 'Computed Value',
-    width: 150,
-    editable: true,
-  },
-];
+function Dashboard() {
+  const [outputFormat, setOutputFormat] = useState<IOutFormat>("json");
+  const [files, setFile] = useUpload();
+  const [data, setData] = useState(null);
 
-function createTransformationData(data: Record<string, any>) {
-  const rows = []
-  let i = 0;
-  for (const key in data) {
-    rows.push({
-      id: i++,
-      columnName: key,
-      aliasName: key.replace(/\s+/g,'_').toLowerCase(),
-      age: null
-    })
-  }
-  return rows;
-}
+  console.log(files);
 
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1,
-});
-
-
-function saveFile(file: IFiles | null | undefined) {
-  if (!file) {
-    return;
-  }
-  return transformFile(file.data);
-}
-
-function bytesToSize(bytes: number) {
-  var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  if (bytes == 0) return 'n/a';
-  var i = parseInt('' + (Math.floor(Math.log(bytes) / Math.log(1024))));
-  if (i == 0) return bytes + ' ' + sizes[i];
-  return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
-};
-
-function AddNewColumn({selectedSheet, setSheetWiseTransformationData}:any) {
-  
-  const [data, setData] = useState<Record<string, any>>({id: 10});
-
-  const handleColumnChange = (e:any ) => {
-
-    const d = {
-      columnName: e.target.value,
-      aliasName: e.target.value.toLowerCase().replace(/\s+/g, '_')
-    }
-    setData((pre) => ({...pre,  ...d }))
-  }
-
-  const handleChange = (e: any) => {
-    setData((pre) => ({ ...pre, [e.target.name]: e.target.value }))
-    console.log(data);
-  }
-
-  const pushData = () => {
-    setSheetWiseTransformationData((pre:any) => {
-      try {
-        console.log(pre[selectedSheet]);
-        const val = [{...data, id: pre[selectedSheet].length+1}, ...pre[selectedSheet]];
-        pre[selectedSheet] = val;
-        console.log(pre[selectedSheet]);
-        
-      } catch (error) {
-        console.log(error);
-        
-      }
-      return {...pre};
-    })
-  }
-
-  return <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
-    <TextField name="columnName" size="small" placeholder="Enter new colum name u want to add" label="Column Name" onChange={handleColumnChange} />
-    <TextField name="aliasName" size="small" disabled value={data['aliasName']} />
-    <TextField name="valueForColumn" size="small" placeholder="Enter new value for this colum" label="Value For Column" onChange={handleChange} />
-    <IconButton color="primary" onClick={pushData}>
-      <Add />
-    </IconButton>
-  </Box>
-}
-
-export default function Dashboard() {
-  const [ files, read ] = useUpload();
-  const { buttonRef, fromBase64 } = useDownload({ autoDownload: true });
-  const [loading, setLoading] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
-  const [convertedFiles, setConvertedFiles] = useState<any>(null);
-  const [selectedSheet, setSelectedSheet] = useState('');
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const inputRef = useRef(null);
-  const [enableTransformation, setTransformation] = useState(false);
-  const excel = useExcel()
-  const [excelData, setExcelData] = useState<any>();
-  const [sheets, setSheets] = useState<any>();
-  const [sheetWiseKeys, setSheetWiseKeys] = useState<Record<string, string[]> | null>();
-  const [sheetWiseTransformationData, setSheetWiseTransformationData] = useState<any>();
-
-  useEffect(() => {
-    return () => {
-      clearTimeout(timer.current);
-      setSheets(null);
-      setSelectedSheet('');
-    };
-  }, []);
-
-  useEffect(() => {
+  const transform = () => {
     if (files) {
-      const data = excel.read(files[0].data);
-      setExcelData(data);
-      const sheets: Record<string, any> = {};
-      const sheetWiseKeys: Record<string, any> = {};
-      const sheetWiseTransformation: Record<string, any> = {}
-      for (let sheet in data) {
-        sheets[sheet] = data[sheet].slice(0, 5);
-        sheetWiseKeys[sheet] = Object.keys(data[sheet][0] || {}) || [];
-        sheetWiseTransformation[sheet] = createTransformationData(sheets[sheet][0] || {})
-      }
-      setSheetWiseKeys(sheetWiseKeys)
-      setSheets(sheets);
-      setSelectedSheet(excel.sheetNames?.[0] || '')
-      setSheetWiseTransformationData(sheetWiseTransformation);
+      const promiseHolder = Promise.all([
+        transformFile(outputFormat, files[0].data).then((d) => d.data),
+        new Promise((res) =>
+          setTimeout(() => {
+            res(true);
+          }, 1000)
+        ),
+      ]);
+
+      toast.promise(promiseHolder, {
+        loading: "Converting...",
+        success: "Successfully converted.",
+        error: "Error while converting.",
+      });
+
+      promiseHolder.then((v) => {
+        setData(v[0]);
+        console.log(v[0]);
+      });
     }
-  }, [files])
-
-  const handleButtonClick = () => {
-
-
-
-    if (!files) {
-      return;
-    }
-
-    if (!loading) {
-      setLoading(true);
-    }
-
-
-
-    new Promise(async (res, rej) => {
-      const value = await saveFile(files[0])
-      setConvertedFiles(value);
-      res(value);
-
-      setTimeout(() => {
-        rej('Timeout!.The Request is taking more time');
-      }, 3000)
-    }).then((val) => {
-      console.log(val);
-      download(convertedFiles['data'])
-      setLoading(false);
-    }).catch((err) => {
-      alert(err)
-    })
-
-
   };
 
-  const openTransformation = () => {
-    if (excelData) {
-      setSelectedSheet(excel.sheetNames?.[0] || '')
-      setOpenModal(true);
-    }
+  const onDownload = () => {
+    const formTypeMapping: Record<IOutFormat, string> = {
+      json: "application/json",
+      csv: "text/csv",
+      html: "text/html",
+      xls: "text/csv",
+    };
 
-  }
+    const dataTransformationMapping = {
+      json: () => JSON.stringify(data, null, 2),
+      csv: () => data as unknown as string,
+      html: () => data as unknown as string,
+      xls: () => data as unknown as string,
+    };
 
+    const fileName = new Date().getTime() + "." + outputFormat;
+    const dataString = dataTransformationMapping[outputFormat]();
+    const blob = new Blob([dataString], {
+      type: formTypeMapping[outputFormat],
+    });
 
+    const href = URL.createObjectURL(blob);
 
-  const download = (data: any) => {
-    const element = document.createElement("a");
-    const textFile = new Blob([JSON.stringify(data, null, 2)], { type: 'text/plain' }); //pass data from localStorage API to blob
-    element.href = URL.createObjectURL(textFile);
-    element.download = "userFile.txt";
-    document.body.appendChild(element);
-    element.click();
-  }
+    // create "a" HTLM element with href to file
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
 
-  useEffect(() => {
-    return () => beforeUpload()
-  });
-
-  function beforeUpload() {
-    if ((inputRef.current as any)?.target?.files) {
-      (inputRef.current as any)['target']['files'] = null
-    }
-  }
-
-  function setTransformedData({ row }: any, eve: any) {
-    setSheetWiseTransformationData((pre: any) => {
-      const indx = pre[selectedSheet]?.findIndex((ele: any) => ele.columnName === row.columnName);
-      console.log(row, "param.columnName");
-
-      pre[selectedSheet][indx].aliasName = eve?.target?.value || 'Encountered Error While Updating';
-      return pre;
-    })
-  }
+    // clean up "a" element & remove ObjectURL
+    document.body.removeChild(link);
+    URL.revokeObjectURL(href);
+  };
 
   return (
-    <>
-      <CssBaseline />
-      <Box component="section">
-        <AppBar position="static">
-          <Toolbar>
-            <IconButton
-              size="large"
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              sx={{ mr: 2 }}
+    <div className="h-full w-full">
+      <nav className="w-full bg-secondary-2 h-[64px] border-b-1 shadow-sm mb-12"></nav>
+
+      <div className="w-[80%] min-h-[400px] max-w-[1300px] shadow-md bg-secondary-2 rounded-lg mx-auto p-12 relative">
+        <div className="flex flex-col justify-center">
+          <div className="upload w-full border-border-g3 border-dashed rounded-md h-[80px] border-[1px] mx-auto relative flex items-center">
+            <img src={excelImg} className="h-[60%] ms-6" />
+            <div className="mx-auto flex justify-center items-center flex-col">
+              {!files && (
+                <>
+                  <div>Select File</div>
+                  <div>xlsx, xls, File size no more than 10MB</div>
+                </>
+              )}
+              {files && <>{files.map((f) => f.name)}</>}
+            </div>
+            <input
+              accept="*"
+              id="icon-button-file"
+              type="file"
+              style={{ display: "none" }}
+              onChange={(e) => setFile(e)}
+            />
+            <label
+              htmlFor="icon-button-file"
+              className="select flex justify-center items-center w-[120px] h-[40px] rounded-lg text-text-g2 me-6 border-solid-1 border-[1px]"
             >
-            </IconButton>
-          </Toolbar>
-        </AppBar>
-      </Box>
-      <Container maxWidth="xl" sx={{ height: '100%' }}>
+              Select
+            </label>
+          </div>
 
-        <Grid2 container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, xl: 3 }} height={'100%'}>
-
-          <Grid2 size={4}>
-            <Typography variant="h6" display="flex" justifyContent="start">
-              Uploaded
-            </Typography>
-
-            <List sx={{ width: '100%', background: 'background.paper' }}>
-              {
-                files?.map((file) =>
-                  <ListItem alignItems="flex-start" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} key={file.name}>
-                    <ListItemIcon>
-                      <img src={excelImg} />
-                    </ListItemIcon>
-                    <ListItemText primary={<>
-                      <Typography
-                        component="p"
-                        sx={{ color: 'text.primary' }}
-                      >
-                        {file.name.replace(/.xlsx|.xls/, '')}
-                      </Typography>
-                      {bytesToSize(file.size)}
-                    </>}
-                      sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}
-                    />
-                  </ListItem>)
-              }
-            </List>
-          </Grid2>
-
-          <Grid2 size={8} display={'flex'} justifyContent={'center'} alignItems={'center'}>
-            <Box sx={{ display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-              <Button
-                component="label"
-                role={undefined}
-                variant="contained"
-                tabIndex={-1}
-                startIcon={<CloudUpload />}
-                onClick={() => beforeUpload()}
-              >
-                Upload files
-                <VisuallyHiddenInput
-                  type="file"
-                  onChange={(event) => read(event)}
-                  ref={inputRef}
-                  accept=".xlsx"
-                />
-              </Button>
-
-              <Box sx={{ m: 1, position: 'relative' }}>
-                <Button
-                  variant="contained"
-                  disabled={loading || !files?.length}
-                  onClick={openTransformation}
-                >
-                  Convert File
-                </Button>
-                {loading && (
-                  <CircularProgress
-                    size={24}
-                    sx={{
-                      color: green[500],
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      marginTop: '-12px',
-                      marginLeft: '-12px',
-                    }}
-                  />
-                )}
-              </Box>
-              Do you wan't to download the response
-
-              <Button
-                component="label"
-                role={undefined}
-                variant="contained"
-                tabIndex={-1}
-                startIcon={<CloudDownload />}
-                disabled={!convertedFiles}
-                ref={buttonRef}
-              >
-                Download
-              </Button>
-            </Box>
-          </Grid2>
-        </Grid2>
-      </Container >
-      <Drawer
-        anchor='right'
-        open={openModal}>
-        <Box sx={{ display: 'flex', justifyContent: 'end' }}>
-
-          <IconButton aria-label="close" sx={{ width: 'fit-content', justifySelf: 'end' }} onClick={() => setOpenModal(false)}>
-            <Close />
-          </IconButton>
-        </Box>
-        <Box sx={{ width: '100%', minWidth: 1000, maxWidth: 1080, bgcolor: 'background.paper', padding: '10px' }}>
-
-          {/* <div className=" my-2">
-            <Typography className="text-xl border rounded-lg p-3 my-2">
-              Excel Data
-            </Typography>
-            <Box sx={{ height: 400, width: '100%' }}>
-              <div className="backdrop-blur-sm box-border border h-full rounded-lg shadow-md">
-                <Tabs aria-label="basic tabs example" sx={{ overflowX: 'scroll' }} value={0}>
-                  {
-                    excel.sheetNames?.map((sheet, index) => <Tab label={sheet} key={index} onClick={() => setSelectedSheet(sheet)} />)
-                  }
-                </Tabs>
-                <TableContainer>
-                  <Table sx={{ minWidth: 500, overflow: 'scroll' }} aria-label="simple table" size="medium">
-                    <TableHead>
-                      <TableRow>
-                        {sheetWiseKeys?.[selectedSheet]?.map((key) => <TableCell>
-                          <Typography className="truncate">
-                            {key}
-                          </Typography>
-                        </TableCell>)}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {sheets?.[selectedSheet]?.map((row: any) => (
-
-                        <TableRow
-                          key={row.name}
-                          sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                        >
-                          {sheetWiseKeys?.[selectedSheet].map((key) => <TableCell component="th" scope="row">
-                            <Typography className="truncate">
-
-                              {row[key]}
-                            </Typography>
-                          </TableCell>)}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </div>
-            </Box>
-
-          </div> */}
-
-          {/* <Accordion expanded={!enableTransformation} className="rounded-lg">
-            <AccordionSummary
-              aria-controls="panel1-content"
-              id="panel1-header"
-              className="w-full"
+          <div className="my-3">Select Output Format</div>
+          <div className="format">
+            <span
+              className={classNames(
+                { active: outputFormat == "json" },
+                "toggle"
+              )}
+              onClick={() => setOutputFormat("json")}
             >
-              <div className=" w-full flex justify-between items-center">
-                <Tabs aria-label="basic tabs example" sx={{ overflowX: 'scroll' }} value={0}>
-                  {
-                    excel.sheetNames?.map((sheet, index) => <Tab label={sheet} key={index} onClick={() => setSelectedSheet(sheet)} />)
-                  }
-                </Tabs>
-                <Checkbox value='transform' onChange={() => setTransformation(!enableTransformation)} />
-              </div>
-            </AccordionSummary> */}
-            {/* <AccordionDetails> */}
-              {/* <Box sx={{ maxHeight: 400, width: '100%' }}> */}
-              <DataGrid
-                rows={sheetWiseTransformationData?.[selectedSheet] || {}}
-                columns={columns}
-                initialState={{
-                  pagination: {
-                    paginationModel: {
-                      pageSize: 10,
-                    },
-                  },
-                }}
-                pageSizeOptions={[5]}
-                checkboxSelection
-                disableRowSelectionOnClick
-                onCellEditStop={(param, eve: any) => setTransformedData(param, eve)}
-                sx={{height: 400}}
+              <text className="ml-3">JSON</text>
+            </span>
+            <span
+              className={classNames(
+                { active: outputFormat == "xls" },
+                "toggle"
+              )}
+              onClick={() => setOutputFormat("xls")}
+            >
+              <text className="ml-3">EXCEL</text>
+            </span>
+            <span
+              className={classNames(
+                { active: outputFormat == "csv" },
+                "toggle"
+              )}
+              onClick={() => setOutputFormat("csv")}
+            >
+              <text className="ml-3">CSV</text>
+            </span>
+            <span
+              className={classNames(
+                { active: outputFormat == "html" },
+                "toggle"
+              )}
+              onClick={() => setOutputFormat("html")}
+            >
+              <text className="ml-3">HTML</text>
+            </span>
+          </div>
+
+          {/* <div className="my-3">Column Customization</div> */}
+
+          <div className="table-container rounded-md">
+            <div className="options">
+              <input
+                className="my-3 p-1 w-[46%] bg-secondary-1 rounded-md border-[1px]"
+                type="text"
+                name="search"
+                id="search"
               />
-              <AddNewColumn selectedSheet={selectedSheet} setSheetWiseTransformationData={setSheetWiseTransformationData} />
-              {/* </Box> */}
-            {/* </AccordionDetails>
-          </Accordion> */}
-          <Button onClick={() => console.log(sheetWiseTransformationData)}>
-            submit
-          </Button>
-        </Box>
-      </Drawer>
-    </>
-  )
+              <span>
+                <button
+                  className=" w-[120px] bg-[var(--blue-track)] text-white p-1 rounded-md me-2"
+                  type="button"
+                >
+                  + Columns
+                </button>
+                <button
+                  className=" w-[120px] bg-secondary-1 p-1 rounded-md border-[1px]"
+                  type="button"
+                >
+                  Filter
+                </button>
+              </span>
+            </div>
+            <table className="column-customization table-auto w-[100%] ">
+              <thead>
+                <tr className="bg-secondary-1 ">
+                  <td>Column Name</td>
+                  <td>Modified name</td>
+                  <td>Data Type</td>
+                  <td>Custom Value</td>
+                  <td>Action</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Name</td>
+                  <td>username</td>
+                  <td>String</td>
+                  <td>Mouli.</td>
+                  <td>
+                    <button>Edit</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Address</td>
+                  <td>address</td>
+                  <td>String</td>
+                  <td>vskp</td>
+                  <td>
+                    <button>Edit</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Number</td>
+                  <td>---</td>
+                  <td>Number</td>
+                  <td>89223423232</td>
+                  <td>
+                    <button>Edit</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="pagination">
+              <div>Showing 1-5 of 50</div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end absolute left-0 right-0 bottom-0">
+          <div className="button-container">
+            <button
+              type="button"
+              className="ring"
+              onClick={transform}
+              disabled={!files}
+            >
+              <div>Convert</div>
+            </button>
+            <button
+              type="button"
+              className="default"
+              disabled={data == null}
+              onClick={onDownload}
+            >
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
+export default Dashboard;

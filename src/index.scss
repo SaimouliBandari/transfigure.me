@@ -10,6 +10,11 @@
 }
 
 html {
-   font-family: Inter !important;
-  font-weight:100;
+  font-family: Inter !important;
+  font-weight: 100;
+}
+
+button,
+.button {
+  @apply transition ease-in-out delay-75  hover:-translate-y-1 hover:scale-105 duration-300;
 }
