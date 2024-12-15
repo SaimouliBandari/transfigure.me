@@ -1,10 +1,20 @@
 import classNames from "classnames";
 import { useUpload } from "hooks/files/useUpload";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import transformFile from "./dashboard.api.service";
 import "./dashboard.scss";
 import excelImg from "/src/assets/web/upload-cloud.svg";
+import Modal from "components/modal/Modal";
+import {
+  Button,
+  Description,
+  DialogTitle,
+  Field,
+  Fieldset,
+  Input,
+  Label,
+} from "@headlessui/react";
 
 type IOutFormat = "json" | "xls" | "csv" | "html";
 type IColOptions = "simple" | "advance";
@@ -13,6 +23,7 @@ function Dashboard() {
   const [outputFormat, setOutputFormat] = useState<IOutFormat>("json");
   const [files, setFile] = useUpload();
   const [data, setData] = useState(null);
+  const modalRef = useRef<any>({});
 
   console.log(files);
 
@@ -116,7 +127,7 @@ function Dashboard() {
               )}
               onClick={() => setOutputFormat("json")}
             >
-              <text className="ml-3">JSON</text>
+              <div className="ml-3">JSON</div>
             </span>
             <span
               className={classNames(
@@ -125,7 +136,7 @@ function Dashboard() {
               )}
               onClick={() => setOutputFormat("xls")}
             >
-              <text className="ml-3">EXCEL</text>
+              <div className="ml-3">EXCEL</div>
             </span>
             <span
               className={classNames(
@@ -134,7 +145,7 @@ function Dashboard() {
               )}
               onClick={() => setOutputFormat("csv")}
             >
-              <text className="ml-3">CSV</text>
+              <div className="ml-3">CSV</div>
             </span>
             <span
               className={classNames(
@@ -143,7 +154,7 @@ function Dashboard() {
               )}
               onClick={() => setOutputFormat("html")}
             >
-              <text className="ml-3">HTML</text>
+              <div className="ml-3">HTML</div>
             </span>
           </div>
 
@@ -161,6 +172,7 @@ function Dashboard() {
                 <button
                   className=" w-[120px] bg-[var(--blue-track)] text-white p-1 rounded-md me-2"
                   type="button"
+                  onClick={modalRef.current?.open}
                 >
                   + Columns
                 </button>
@@ -240,6 +252,52 @@ function Dashboard() {
           </div>
         </div>
       </div>
+      <Modal
+        ref={modalRef}
+        dialogPanelClass="w-full max-w-lg  rounded-xl bg-white/5 p-6 backdrop-blur-2xl duration-300 ease-out data-[closed]:transform-[scale(95%)] data-[closed]:opacity-0 shadow-slate-800 shadow-2xl"
+        dialogBackdropClassName="fixed inset-0 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in bg-black/70"
+        title={
+          <DialogTitle as="h3" className="text-base/7 font-medium text-white ">
+            Payment successful
+          </DialogTitle>
+        }
+        body={
+          // <p className="mt-2 text-sm/6 text-white/50 ">
+          //   Your payment has been successfully submitted. We’ve sent you an
+          //   email with all of the details of your order.
+          // </p>
+          <>
+            <Fieldset className="flex flex-wrap justify-between">
+              <Field className="flex flex-col">
+                <Label>Column Name :</Label>
+                <Input className="border border-border-g1 rounded" />
+              </Field>
+              <Field className="flex flex-col">
+                <Label>Aliasing :</Label>
+                <Input className="border border-border-g1 rounded" />
+              </Field>
+              <Field className="flex flex-col">
+                <Label>Type :</Label>
+                <Input className="border border-border-g1 rounded" />
+              </Field>
+              <Field className="flex flex-col">
+                <Label>custom value :</Label>
+                <Input className="border border-border-g1 rounded" />
+              </Field>
+            </Fieldset>
+          </>
+        }
+        footer={
+          <div className="mt-4">
+            <Button
+              className="inline-flex items-center gap-2 rounded-md bg-gray-700 py-1.5 px-3 text-sm/6 font-semibold  text-white shadow-inner shadow-white/10 focus:outline-none data-[hover]:bg-gray-600 data-[focus]:outline-1 data-[focus]:outline-white data-[open]:bg-gray-700"
+              onClick={() => console.log(modalRef?.current?.["close"]())}
+            >
+              Got it, thanks!
+            </Button>
+          </div>
+        }
+      />
     </div>
   );
 }

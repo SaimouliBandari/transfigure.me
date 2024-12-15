@@ -1,29 +1,26 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import App from './App.tsx'
-import './index.scss'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import App from "./App.tsx";
+import "./index.scss";
 // import Dashboard from './views/Dashboard/Dashboard.tsx'
-import { StyledEngineProvider } from '@mui/material'
-import Dashboard from 'views/dashboard/dashboard.tsx'
+import Dashboard from "views/dashboard/dashboard.tsx";
 
 const routes = createBrowserRouter([
   {
-    path: '',
+    path: "",
     element: <App />,
     children: [
       {
-        path: '/',
-        element: <Dashboard />
-      }
-    ]
-  }
-])
+        path: "/",
+        element: <Dashboard />,
+      },
+    ],
+  },
+]);
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <StyledEngineProvider injectFirst>
-      <RouterProvider router={routes} />
-    </StyledEngineProvider>
+    <RouterProvider router={routes} />
   </StrictMode>
-)
+);
